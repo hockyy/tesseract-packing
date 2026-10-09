@@ -2,7 +2,7 @@
 
 Packings of n unit 4-cubes (tesseracts) inside the smallest possible 4-cube, with rotations allowed.
 
-Live page with an in-browser search you can rerun: https://packing.mikira.id
+Code and data for the findings below. Live page with an in-browser search you can rerun: https://packing.mikira.id
 
 ## Results
 
@@ -22,7 +22,7 @@ These are **candidates**. They pass a double-precision check: full separating-ax
 - `src/prodseeds.py` writes 4D seeds from the 5×5 product construction, spread to side s0, plus n − 25 random cubes.
 - `src/verify.py` is an independent NumPy checker. Run `python src/verify.py results/n27_side_2.942809214.json`.
 - `src/gpu.cu` is an experimental CUDA port of the search. It is no faster than the CPU version.
-- `site/` holds the page source. `core.js` is a JavaScript port of the polish and basin hopping. Build with `python build.py`.
+- `src/core.js` is a JavaScript port of the polish and basin hopping. It powers the interactive search on the live page.
 
 ## JSON format
 
