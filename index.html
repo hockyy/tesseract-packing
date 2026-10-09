@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="26 and 27 unit 4-cubes packed in a 4-cube of side 2.942809, with an in-browser search you can rerun.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect x=%271%27 y=%271%27 width=%2714%27 height=%2714%27 fill=%27none%27 stroke=%27%231f5fd1%27 stroke-width=%271.5%27/%3E%3Crect x=%275%27 y=%275%27 width=%276%27 height=%276%27 fill=%27%231f5fd1%27 transform=%27rotate(45 8 8)%27/%3E%3C/svg%3E">
+<title>Tesseracts in a Box</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab-notebook page. Reading column for prose; the simulator and the tables break out to full width. */
+:root {
+  --paper: #eef1f3;      /* cool drafting paper */
+  --sheet: #f8fafb;      /* raised panels */
+  --ink: #18222b;
+  --muted: #5a6873;
+  --rule: #c9d2d9;
+  --frame: #8a99a6;      /* axis-aligned corner cubes */
+  --tilt: #1f5fd1;       /* tilted channel cubes */
+  --hot: #c2410c;        /* overlaps */
+  --display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #10161b; --sheet: #172028; --ink: #e3e9ee; --muted: #93a1ac; --rule: #2b3843;
+    --frame: #6f7f8c; --tilt: #6ea2ff; --hot: #fb8a4c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #10161b; --sheet: #172028; --ink: #e3e9ee; --muted: #93a1ac; --rule: #2b3843;
+  --frame: #6f7f8c; --tilt: #6ea2ff; --hot: #fb8a4c; color-scheme: dark;
+}
+body { background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
+.wrap > * { min-width: 0; }
+.col { max-width: 680px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2.1rem, 5vw, 3.3rem); letter-spacing: -0.01em; max-width: 900px; }
+h1 em { font-weight: 400; }
+h2 { font-size: 1.7rem; margin-bottom: 12px; }
+h3 { font-size: 1.2rem; margin: 22px 0 6px; }
+p { margin: 0 0 14px; }
+a { color: var(--tilt); text-underline-offset: 2px; }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lede { font-family: var(--display); font-size: 1.3rem; line-height: 1.45; max-width: 720px; margin-top: 14px; }
+header { display: grid; gap: 10px; }
+.figs { display: flex; flex-wrap: wrap; gap: 26px 44px; margin-top: 18px; }
+.fig { display: grid; gap: 4px; }
+.fig b { font: 500 1.55rem/1 var(--mono); font-variant-numeric: tabular-nums; }
+.fig span { font-size: 13px; color: var(--muted); }
+.fig b.new { color: var(--tilt); }
+.fig b.old { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+/* simulator */
+.sim { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 18px; display: grid; gap: 16px; }
+.simgrid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 800px) { .simgrid { grid-template-columns: 1fr; } }
+.stagecol { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.stage { position: relative; aspect-ratio: 1 / 1; max-width: 100%; border-radius: 4px; background: var(--paper); cursor: grab; touch-action: none; }
+.stage canvas { width: 100%; height: 100%; display: block; }
+.side { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.shadows { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 560px) { .shadows { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sh { display: grid; gap: 3px; }
+.sh canvas { width: 100%; aspect-ratio: 1 / 1; background: var(--paper); border-radius: 3px; display: block; }
+.sh span { font: 11px/1 var(--mono); color: var(--muted); text-align: center; }
+fieldset { border: 1px solid var(--rule); border-radius: 4px; margin: 0; padding: 12px 14px 14px; display: grid; gap: 10px; min-width: 0; }
+legend { font: 500 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 12px; color: var(--muted); }
+.field input, .field select, .presetrow select { font: 14px/1.2 var(--mono); padding: 7px 8px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--ink); width: 100%; min-width: 0; box-sizing: border-box; }
+.seedrow { display: flex; gap: 6px; }
+.seedrow input { flex: 1; }
+.presetrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.presetrow select { flex: 1 1 180px; width: auto; }
+.readout { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font: 13px/1.5 var(--mono); font-variant-numeric: tabular-nums; margin: 0; }
+.readout dt { color: var(--muted); }
+.readout dd { margin: 0; text-align: right; }
+.readout dd.big { font-size: 1.3rem; font-weight: 500; }
+.status { font: 13px/1.5 var(--mono); color: var(--muted); min-height: 3em; margin: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: 600 14px/1 var(--body); padding: 10px 14px; border-radius: 4px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button.small { padding: 7px 10px; font-size: 13px; }
+button.primary { background: var(--tilt); border-color: var(--tilt); color: var(--sheet); }
+button:hover:not(:disabled) { border-color: var(--tilt); }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--tilt); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: default; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+.legend label { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.mark td { background: color-mix(in srgb, var(--tilt) 9%, transparent); }
+.pill { display: inline-block; font: 500 11px/1 var(--mono); padding: 4px 6px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.cand { color: var(--tilt); } .pill.known { color: var(--muted); } .pill.run { color: var(--hot); }
+ol, ul { padding-left: 1.2em; margin: 0 0 14px; }
+li { margin-bottom: 6px; }
+code, .mono { font-family: var(--mono); font-size: 0.92em; }
+details { border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); padding: 12px 14px; }
+summary { cursor: pointer; font-weight: 600; }
+pre { overflow-x: auto; font: 12px/1.5 var(--mono); background: var(--paper); padding: 12px; border-radius: 4px; max-height: 320px; white-space: pre-wrap; word-break: break-all; }
+.note { font-size: 14px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+body { margin: 0; } [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Packing unit hypercubes in a hypercube · dimension 4 · October 2026</div>
+    <h1>Twenty-seven unit tesseracts fit in a 4-cube of side <em>2.9428</em></h1>
+    <p class="lede">The best constructions we could find for 26 and 27 unit 4-cubes need sides 2.956 and 2.98995. A search in four dimensions found packings for both inside side 2.942809. You can rerun that search below, with your own seed and settings.</p>
+    <div class="figs">
+      <div class="fig"><b class="new">2.942809</b><span>this work, n = 26 and n = 27</span></div>
+      <div class="fig"><b class="old">2.98995</b><span>previous construction, n = 27</span></div>
+      <div class="fig"><b class="old">2.956</b><span>previous construction, n = 26</span></div>
+      <div class="fig"><b>2 + 2√2⁄3</b><span>agrees to 4×10⁻¹⁰ (conjectured exact form)</span></div>
+    </div>
+  </header>
+
+  <section class="sim" aria-label="Interactive search">
+    <div class="simgrid">
+      <div class="stagecol">
+        <div class="stage" id="stage"><canvas id="main" aria-label="Rotating 4D projection of the packing"></canvas></div>
+        <div class="shadows" id="shadows"></div>
+        <div class="legend">
+          <span><i style="background:var(--frame)"></i>axis-aligned</span>
+          <span><i style="background:var(--tilt)"></i>tilted</span>
+          <span><i style="background:var(--hot)"></i>overlapping</span>
+          <label><input type="checkbox" id="spin" checked> rotate in 4D</label>
+        </div>
+      </div>
+      <div class="side">
+        <div class="presetrow">
+          <select id="preset" aria-label="Found packing to display"></select>
+          <button class="small" id="show">Show</button>
+        </div>
+        <dl class="readout">
+          <dt>cubes</dt><dd id="rN">27</dd>
+          <dt>box side s</dt><dd class="big" id="rS">2.942809</dd>
+          <dt>construction to beat</dt><dd id="rT">2.989949</dd>
+          <dt>worst overlap</dt><dd id="rV">0</dd>
+          <dt>phase</dt><dd id="rP">found packing</dd>
+          <dt>L-BFGS steps</dt><dd id="rI">0</dd>
+          <dt>best this session</dt><dd id="rB">none yet</dd>
+        </dl>
+        <p class="status" id="status" aria-live="polite">Showing the 27-cube packing found by the C++ search. Press "Run search" to start a fresh search from the seed below.</p>
+        <form id="params">
+          <fieldset>
+            <legend>Search settings</legend>
+            <div class="fields">
+              <div class="field"><label for="pn">Cubes n</label>
+                <select id="pn"><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option></select></div>
+              <div class="field"><label for="pseed">Seed</label>
+                <div class="seedrow"><input id="pseed" type="number" min="0" max="4294967295" step="1" value="23"><button type="button" class="small" id="randseed" aria-label="Pick a random seed">↻</button></div></div>
+              <div class="field"><label for="ps0">Start side s₀</label><input id="ps0" type="number" min="2.75" max="3.2" step="0.01" value="2.90"></div>
+              <div class="field"><label for="pjit">Jitter</label><input id="pjit" type="number" min="0" max="0.2" step="0.005" value="0.03"></div>
+              <div class="field"><label for="pcap">Steps per round</label><input id="pcap" type="number" min="200" max="10000" step="100" value="3000"></div>
+              <div class="field"><label for="pang">Hop angle max (°)</label><input id="pang" type="number" min="5" max="90" step="1" value="45"></div>
+            </div>
+          </fieldset>
+          <div class="controls" style="margin-top:12px">
+            <button class="primary" id="run" type="submit">Run search</button>
+            <button type="button" id="hop">Basin hop</button>
+            <button type="button" id="stop" disabled>Stop</button>
+          </div>
+        </form>
+        <p class="note" style="margin:0">A run starts from the 25-cube product construction stretched to side s₀ and adds n − 25 cubes at random spots. It then minimizes the box side under no-overlap constraints. The seed fixes the random choices, so the same seed and settings give the same run. Different browsers can round slightly differently and drift apart late in a run. With the defaults, seed 23 settles near 2.9435 for n = 26. Basin hop starts from whatever is on screen.</p>
+      </div>
+    </div>
+    <p class="note" style="margin:0">The large view rotates all cubes in four dimensions and projects them to the screen; drag to turn it. The six small squares are the shadows of the packing on the coordinate planes x₁x₂, x₃x₄, x₁x₃, x₂x₄, x₁x₄ and x₂x₃, with the box drawn as a square.</p>
+  </section>
+
+  <section class="col">
+    <h2>The problem</h2>
+    <p>How small can a d-dimensional cube be if it must hold n unit d-cubes without overlap? The cubes may be rotated freely. In two and three dimensions this is a long-running puzzle catalogued by Erich Friedman, and records still fall: H. Lin's entries for 11 and 12 cubes in 3D date from July 2026. In four dimensions we found no published table.</p>
+    <p>Small cases are easy. Side 2 holds 16 cubes in a 2×2×2×2 grid, and side 3 holds 81 in a 3×3×3×3 grid. The interesting values lie between, where cubes have to tilt.</p>
+    <h3>Constructions from lower dimensions</h3>
+    <p>Known 2D and 3D packings combine into 4D ones. The best packing of 5 squares has side 2 + 1/√2 ≈ 2.7071: four squares in the corners and one turned 45° in the middle. Use that pattern in coordinates (x₁, x₂) and again in (x₃, x₄), and each pair of positions holds a 4-cube, giving 5 × 5 = 25 cubes at side 2.7071. A 3D packing can also be stacked in two layers along the fourth axis. Friedman's 13-cube record of side 2.956 gives 26 cubes, and his 14-cube record of side 2 + 7√2/10 ≈ 2.98995 gives 28.</p>
+    <p>That leaves a jump after 25 cubes: from 2.7071 straight to 2.956 for 26 and to 2.98995 for 27. Both new packings land inside that gap.</p>
+    <h3>The packings</h3>
+    <p>Both keep the skeleton of the 5 × 5 construction. Sixteen cubes sit nearly axis-aligned in the corners of the box. The rest occupy the channels between them, each turned by 25°–45° within one coordinate plane, and one is turned in two planes at once, the 4D analogue of the 45° centre square. Compared with the 25-cube construction, the corner frame opens up by about 0.24, which makes room for one or two more channel cubes.</p>
+    <p>The two sides agree with 2 + 2√2/3 to within 4 × 10⁻¹⁰ (n = 26) and 2 × 10⁻⁷ (n = 27). That points to a rigid structure with an exact description, but we have not derived it, so treat the closed form as a conjecture. Since 27 cubes fit, 26 do as well; the dedicated 26-cube run is slightly tighter.</p>
+  </section>
+
+  <section class="col">
+    <h2>How they were found</h2>
+    <ol>
+      <li><b>Soft-to-rigid search.</b> We adapted <a href="https://yoheinakajima.github.io/soft-to-rigid-packing/" target="_blank" rel="noopener">Yohei Nakajima's soft-to-rigid method</a> to any dimension: particles start as balls and harden into cubes while the box shrinks. Each pair of cubes carries its own separating direction as a free variable, so a positive gap along that direction proves the pair does not overlap.</li>
+      <li><b>Constrained polish.</b> An augmented Lagrangian with L-BFGS minimizes the box side subject to pair, wall and orthogonality constraints, with hand-written gradients in C++. On the 5-square test it reaches 2 + 1/√2 to 10⁻¹⁰ in a third of a second. The search on this page is a line-for-line JavaScript port.</li>
+      <li><b>Seeding from the construction.</b> Random starts never beat the constructions in 4D. Starting from the 25-cube product spread to side 2.9, with the extra cubes dropped in at random, gave 2.943189 for n = 26 in the first batch of 20 seeds and 2.951791 for n = 27.</li>
+      <li><b>Basin hopping.</b> Twenty threads ran for ten minutes per n, each repeatedly turning, moving or swapping one or two cubes, re-polishing, and keeping improvements. That brought both to 2.942809.</li>
+    </ol>
+    <h3>Verification so far</h3>
+    <p>An independent checker in NumPy tests every pair of cubes against all 56 candidate separating directions of the 4D separating-axis theorem, then checks the walls and the orthogonality of each rotation. Smallest gap between two cubes: 4.5 × 10⁻¹¹ (n = 26) and 1.05 × 10⁻¹⁰ (n = 27). Walls are exact to rounding and rotations orthogonal to 4 × 10⁻¹⁶.</p>
+    <h3>What is still missing</h3>
+    <ul>
+      <li>An exact certificate in rational arithmetic with a safety margin, as Nakajima produced for his 3D claim. The current check uses double-precision floating point.</li>
+      <li>A thorough literature search. The 2.956 and 2.98995 baselines are our own constructions from 3D results, not published 4D values. We found no 4D catalogue, which does not rule one out.</li>
+      <li>A derivation of the conjectured exact side 2 + 2√2/3.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2>Best known values in 4D</h2>
+      <p>Smallest known side s(n) for n unit 4-cubes in a 4-cube. Rows other than n = 26 and 27 are constructions built from the cited lower-dimensional results. Searches for n = 28 to 32 are still running.</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>n</th><th>side s(n)</th><th>construction</th><th>source</th><th>status</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="num">1</td><td>one cube</td><td>trivial</td><td><span class="pill known">optimal</span></td></tr>
+        <tr><td class="num">2–16</td><td class="num">2</td><td>2×2×2×2 grid</td><td>trivial. We found no 4D proof that side 2 is optimal; in 2D, s(2) = s(3) = 2 is shown in <a href="https://www.combinatorics.org/ojs/index.php/eljc/article/view/DS7" target="_blank" rel="noopener">Friedman's survey</a></td><td><span class="pill known">believed optimal</span></td></tr>
+        <tr><td class="num">17–25</td><td class="num">2.707107<br>2 + 1/√2</td><td>5-square packing in (x₁,x₂) × the same in (x₃,x₄)</td><td>2D value from <a href="https://www.combinatorics.org/ojs/index.php/eljc/article/view/DS7" target="_blank" rel="noopener">Friedman, Packing Unit Squares in Squares</a>. Our searches for n = 17 and 18 reached it and nothing lower</td><td><span class="pill known">construction</span></td></tr>
+        <tr class="mark"><td class="num">26</td><td class="num">2.942809<br>≈ 2 + 2√2/3</td><td>16-corner frame + 10 tilted channel cubes</td><td>this page. Previous: 2.956, the 3D 13-cube record (<a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman 1998</a>) stacked in 2 layers</td><td><span class="pill cand">new candidate</span></td></tr>
+        <tr class="mark"><td class="num">27</td><td class="num">2.942809<br>≈ 2 + 2√2/3</td><td>16-corner frame + 11 tilted channel cubes</td><td>this page. Previous: 2.98995, the 3D 14-cube record (<a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman 1998</a>) stacked in 2 layers</td><td><span class="pill cand">new candidate</span></td></tr>
+        <tr><td class="num">28</td><td class="num">2.989949<br>2 + 7√2/10</td><td>3D 14-cube record × 2 layers</td><td><a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman 1998 (Cubes in Cubes)</a></td><td><span class="pill run">search running</span></td></tr>
+        <tr><td class="num">29–81</td><td class="num">3</td><td>3×3×3×3 grid</td><td>trivial</td><td><span class="pill run">search running</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2>The 2D and 3D results these rest on</h2>
+      <p>Best known sides for the lower-dimensional packings used above, with where each was published or announced.</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>dim</th><th>n</th><th>side</th><th>by</th><th>source</th></tr></thead>
+      <tbody>
+        <tr><td>2D</td><td class="num">5</td><td class="num">2.707107 (2 + 1/√2)</td><td>classical, proved optimal</td><td><a href="https://www.combinatorics.org/ojs/index.php/eljc/article/view/DS7" target="_blank" rel="noopener">Friedman, Packing Unit Squares in Squares (Electronic Journal of Combinatorics, survey DS7)</a></td></tr>
+        <tr><td>3D</td><td class="num">9–10</td><td class="num">2.707107</td><td>E. Friedman, 1998</td><td><a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Erich Friedman's Packing Center: Cubes in Cubes</a></td></tr>
+        <tr><td>3D</td><td class="num">11</td><td class="num">2.88295</td><td>H. Lin (Tencent Hyra), July 2026</td><td><a href="https://github.com/Tencent-Hunyuan/hyra-results" target="_blank" rel="noopener">Hyra-results repository</a>; <a href="https://x.com/TencentHunyuan/status/2079416748483440755" target="_blank" rel="noopener">Tencent Hy announcement on X</a></td></tr>
+        <tr><td>3D</td><td class="num">11</td><td class="num">2.89444 (earlier)</td><td>Berthold, Kamp, Mexi, Pokutta, Pólik, 2026</td><td><a href="https://arxiv.org/abs/2605.04850" target="_blank" rel="noopener">Out-of-the-Box Global Optimization for Packing Problems (arXiv)</a></td></tr>
+        <tr><td>3D</td><td class="num">12</td><td class="num">2.93277</td><td>H. Lin (Tencent Hyra), July 2026</td><td><a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman's Cubes in Cubes</a></td></tr>
+        <tr><td>3D</td><td class="num">12</td><td class="num">2.93152 (claimed)</td><td>Y. Nakajima, 2026, self-reported</td><td><a href="https://github.com/yoheinakajima/soft-to-rigid-packing" target="_blank" rel="noopener">soft-to-rigid-packing repository</a></td></tr>
+        <tr><td>3D</td><td class="num">13</td><td class="num">2.956</td><td>E. Friedman, 1998</td><td><a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman's Cubes in Cubes</a></td></tr>
+        <tr><td>3D</td><td class="num">14</td><td class="num">2.989949 (2 + 7√2/10)</td><td>E. Friedman, 1998</td><td><a href="https://erich-friedman.github.io/packing/cubincub/" target="_blank" rel="noopener">Friedman's Cubes in Cubes</a></td></tr>
+      </tbody>
+    </table></div>
+    <p class="note col" style="margin-top:12px">For 4D jamming of spheres rather than cubes, see <a href="https://arxiv.org/abs/cond-mat/0608362" target="_blank" rel="noopener">Skoge, Donev, Stillinger and Torquato (2006)</a>. It is a different problem and gives no cube values.</p>
+  </section>
+
+  <section class="col">
+    <h2>Coordinates</h2>
+    <p>Each cube is a centre c ∈ ℝ⁴ and a 4×4 orthogonal matrix R whose columns are the cube's edge directions. Its vertices are c + R·(±½, ±½, ±½, ±½), and the box is [0, s]⁴. Centres are listed cube by cube; R is row-major, 16 numbers per cube.</p>
+    <details>
+      <summary>Show a packing as JSON</summary>
+      <div class="presetrow" style="margin-top:10px">
+        <select id="jsonpick" aria-label="Packing to show as JSON"></select>
+        <button class="small" type="button" id="copy">Copy JSON</button>
+        <span class="note" id="copied" aria-live="polite"></span>
+      </div>
+      <pre id="json"></pre>
+    </details>
+  </section>
+
+  <footer>Found 9 October 2026 with a C++ search written in a Claude Code session. Code, coordinates and the checker are on <a href="https://github.com/hockyy/tesseract-packing" target="_blank" rel="noopener">GitHub</a>. Every value marked as a candidate stays one until it has an exact certificate and a literature check.</footer>
+</div>
+
+<script>
+/* Search core: product-construction seeds, augmented-Lagrangian + L-BFGS polish, basin-hopping moves.
+   Mirrors polish.cpp. Works in the browser (window.Core) and in Node (module.exports). */
+(function (root) {
+const d = 4;
+let n, NP, PI, PJ, nd, ndd, NV, NW, NO;
+function setup(nn) {
+  n = nn; NP = n * (n - 1) / 2; PI = []; PJ = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { PI.push(i); PJ.push(j); }
+  nd = n * d; ndd = n * d * d; NV = nd + ndd + NP * d + 1; NW = n * d * 2; NO = n * d * (d + 1) / 2;
+}
+/* seeded RNG (mulberry32) */
+let rs = 1;
+function setSeed(k) { rs = (k >>> 0) ^ 0x6d2b79f5; for (let i = 0; i < 4; i++) rnd(); }
+function rnd() { rs = (rs + 0x6d2b79f5) >>> 0; let t = rs; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+function gauss() { const u = rnd() || 1e-12, v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function gs(R, off) {
+  for (let m = 0; m < d; m++) {
+    for (let p = 0; p < m; p++) { let dot = 0; for (let k = 0; k < d; k++) dot += R[off + k*d + m] * R[off + k*d + p]; for (let k = 0; k < d; k++) R[off + k*d + m] -= dot * R[off + k*d + p]; }
+    let nr = 0; for (let k = 0; k < d; k++) nr += R[off + k*d + m] ** 2; nr = Math.sqrt(nr); for (let k = 0; k < d; k++) R[off + k*d + m] /= nr;
+  }
+}
+const sgn = x => x > 0 ? 1 : x < 0 ? -1 : 0;
+function clone(P) { return { n: P.n, c: P.c.slice(), R: P.R.slice(), u: P.u.slice(), s: P.s }; }
+function axesFromCentres(P, only) {
+  for (let p = 0; p < NP; p++) {
+    if (only && !only.has(PI[p]) && !only.has(PJ[p])) continue;
+    let nr = 0; for (let k = 0; k < d; k++) { const w = P.c[PJ[p]*d+k] - P.c[PI[p]*d+k]; P.u[p*d+k] = w; nr += w*w; }
+    nr = Math.sqrt(nr) + 1e-12; for (let k = 0; k < d; k++) P.u[p*d+k] /= nr;
+  }
+}
+function fromData(D) {
+  setup(D.n);
+  const P = { n: D.n, c: Float64Array.from(D.centers), R: Float64Array.from(D.R), u: new Float64Array(NP*d), s: D.s };
+  axesFromCentres(P); return P;
+}
+/* the 5x5 product construction (25 cubes) spread to side s0, plus n-25 random cubes */
+function productSeed(nn, s0, jit) {
+  setup(nn);
+  const s = 2 + 1 / Math.SQRT2;
+  const two = [[.5,.5,0],[s-.5,.5,0],[.5,s-.5,0],[s-.5,s-.5,0],[s/2,s/2,Math.PI/4]];
+  const P = { n, c: new Float64Array(n*d), R: new Float64Array(n*d*d), u: new Float64Array(NP*d), s: s0 };
+  let i = 0;
+  for (const a of two) for (const b of two) {
+    if (i >= n) break;
+    const pos = [a[0], a[1], b[0], b[1]];
+    for (let k = 0; k < d; k++) P.c[i*d+k] = (pos[k] - s/2) * (s0/s) + s0/2 + jit * gauss();
+    const off = i*16, ca = Math.cos(a[2]), sa = Math.sin(a[2]), cb = Math.cos(b[2]), sb = Math.sin(b[2]);
+    const M = [ca,-sa,0,0, sa,ca,0,0, 0,0,cb,-sb, 0,0,sb,cb];
+    for (let q = 0; q < 16; q++) P.R[off+q] = M[q] + jit * gauss();
+    gs(P.R, off); i++;
+  }
+  for (; i < n; i++) {
+    for (let k = 0; k < d; k++) P.c[i*d+k] = 0.5 + (s0 - 1) * rnd();
+    for (let q = 0; q < 16; q++) P.R[i*16+q] = gauss();
+    gs(P.R, i*16);
+  }
+  axesFromCentres(P); return P;
+}
+
+const MARGIN = 1e-12;
+function makeProb(P) {
+  const sg = new Float64Array(NP);
+  for (let p = 0; p < NP; p++) { let uw = 0; for (let k = 0; k < d; k++) uw += P.u[p*d+k] * (P.c[PJ[p]*d+k] - P.c[PI[p]*d+k]); sg[p] = uw >= 0 ? 1 : -1; }
+  const x = new Float64Array(NV);
+  x.set(P.c, 0); x.set(P.R, nd); x.set(P.u, nd + ndd); x[NV-1] = P.s;
+  return { sg, x, lp: new Float64Array(NP), lw: new Float64Array(NW), lo: new Float64Array(NO), mu: 10 };
+}
+function evalL(pb, x, g, cons) {
+  const { sg, lp, lw, lo, mu } = pb;
+  let L = x[NV-1];
+  if (g) { g.fill(0); g[NV-1] = 1; }
+  const ai = [0,0,0,0], aj = [0,0,0,0], uh = [0,0,0,0], gh = [0,0,0,0];
+  for (let p = 0; p < NP; p++) {
+    const i = PI[p], j = PJ[p], uo = nd + ndd + p*d, Ri = nd + i*16, Rj = nd + j*16;
+    let nr = 0; for (let k = 0; k < d; k++) nr += x[uo+k] ** 2; nr = Math.sqrt(nr);
+    for (let k = 0; k < d; k++) uh[k] = x[uo+k] / nr;
+    let hs = 0, uw = 0;
+    for (let m = 0; m < d; m++) { let a = 0, b = 0; for (let k = 0; k < d; k++) { a += x[Ri+k*d+m] * uh[k]; b += x[Rj+k*d+m] * uh[k]; } ai[m] = a; aj[m] = b; hs += 0.5 * (Math.abs(a) + Math.abs(b)); }
+    for (let k = 0; k < d; k++) uw += uh[k] * (x[j*d+k] - x[i*d+k]);
+    const gv = sg[p] * uw - hs - MARGIN;
+    if (cons) cons.gp[p] = gv;
+    const w = -Math.max(0, lp[p] - mu * gv);
+    L += (w*w - lp[p]*lp[p]) / (2*mu);
+    if (g && w !== 0) {
+      for (let k = 0; k < d; k++) { let v = sg[p] * (x[j*d+k] - x[i*d+k]); for (let m = 0; m < d; m++) v -= 0.5 * (sgn(ai[m]) * x[Ri+k*d+m] + sgn(aj[m]) * x[Rj+k*d+m]); gh[k] = v; }
+      let dot = 0; for (let k = 0; k < d; k++) dot += gh[k] * uh[k];
+      for (let k = 0; k < d; k++) {
+        g[uo+k] += w * (gh[k] - dot * uh[k]) / nr;
+        g[j*d+k] += w * sg[p] * uh[k]; g[i*d+k] -= w * sg[p] * uh[k];
+        for (let m = 0; m < d; m++) { g[Ri+k*d+m] += w * (-0.5 * sgn(ai[m]) * uh[k]); g[Rj+k*d+m] += w * (-0.5 * sgn(aj[m]) * uh[k]); }
+      }
+    }
+  }
+  const s = x[NV-1];
+  for (let i = 0; i < n; i++) for (let k = 0; k < d; k++) {
+    const Ro = nd + i*16 + k*d; let l1 = 0; for (let m = 0; m < d; m++) l1 += Math.abs(x[Ro+m]);
+    const hw = 0.5 * l1, xx = x[i*d+k];
+    for (let side = 0; side < 2; side++) {
+      const id = (i*d+k)*2 + side, gv = (side === 0 ? xx - hw : s - xx - hw) - MARGIN;
+      if (cons) cons.gw[id] = gv;
+      const w = -Math.max(0, lw[id] - mu * gv); L += (w*w - lw[id]*lw[id]) / (2*mu);
+      if (g && w !== 0) { g[i*d+k] += w * (side === 0 ? 1 : -1); if (side === 1) g[NV-1] += w; for (let m = 0; m < d; m++) g[Ro+m] += w * (-0.5 * sgn(x[Ro+m])); }
+    }
+  }
+  let oid = 0;
+  for (let i = 0; i < n; i++) { const Ro = nd + i*16;
+    for (let m = 0; m < d; m++) for (let m2 = m; m2 < d; m2++, oid++) {
+      let e = m === m2 ? -1 : 0; for (let k = 0; k < d; k++) e += x[Ro+k*d+m] * x[Ro+k*d+m2];
+      if (cons) cons.eo[oid] = e;
+      const w = lo[oid] + mu * e; L += lo[oid] * e + 0.5 * mu * e * e;
+      if (g) for (let k = 0; k < d; k++) {
+        if (m === m2) g[Ro+k*d+m] += 2 * w * x[Ro+k*d+m];
+        else { g[Ro+k*d+m] += w * x[Ro+k*d+m2]; g[Ro+k*d+m2] += w * x[Ro+k*d+m]; }
+      }
+    } }
+  return L;
+}
+const dotv = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+function makeLBFGS(pb) {
+  const st = { g: new Float64Array(NV), gn: new Float64Array(NV), xn: new Float64Array(NV), dir: new Float64Array(NV), S: [], Y: [], rho: [], f: 0, done: false };
+  st.f = evalL(pb, pb.x, st.g); return st;
+}
+function lbfgsStep(pb, st) {
+  const x = pb.x, g = st.g, N = NV;
+  let gmax = 0; for (let i = 0; i < N; i++) gmax = Math.max(gmax, Math.abs(g[i]));
+  if (gmax < 1e-11) { st.done = true; return; }
+  const dir = st.dir; dir.set(g); const k = st.S.length, al = new Float64Array(k);
+  for (let q = k - 1; q >= 0; q--) { al[q] = st.rho[q] * dotv(st.S[q], dir); const Yq = st.Y[q]; for (let i = 0; i < N; i++) dir[i] -= al[q] * Yq[i]; }
+  if (k) { const gam = dotv(st.S[k-1], st.Y[k-1]) / dotv(st.Y[k-1], st.Y[k-1]); for (let i = 0; i < N; i++) dir[i] *= gam; }
+  else { const nr = Math.sqrt(dotv(g, g)); for (let i = 0; i < N; i++) dir[i] *= 1e-3 / Math.max(nr, 1e-12); }
+  for (let q = 0; q < k; q++) { const be = st.rho[q] * dotv(st.Y[q], dir), Sq = st.S[q]; for (let i = 0; i < N; i++) dir[i] += Sq[i] * (al[q] - be); }
+  for (let i = 0; i < N; i++) dir[i] = -dir[i];
+  let gd = dotv(g, dir);
+  if (gd >= 0) { st.S = []; st.Y = []; st.rho = []; const nr = Math.sqrt(dotv(g, g)); for (let i = 0; i < N; i++) dir[i] = -g[i] * 1e-3 / Math.max(nr, 1e-12); gd = dotv(g, dir); }
+  let step = 1, ok = false, fn = st.f;
+  for (let ls = 0; ls < 40; ls++) {
+    for (let i = 0; i < N; i++) st.xn[i] = x[i] + step * dir[i];
+    fn = evalL(pb, st.xn, st.gn);
+    if (fn <= st.f + 1e-4 * step * gd) { ok = true; break; }
+    step *= 0.5;
+  }
+  if (!ok) { if (!st.S.length) st.done = true; st.S = []; st.Y = []; st.rho = []; return; }
+  const sv = new Float64Array(N), yv = new Float64Array(N);
+  for (let i = 0; i < N; i++) { sv[i] = st.xn[i] - x[i]; yv[i] = st.gn[i] - g[i]; }
+  const sy = dotv(sv, yv);
+  if (sy > 1e-14) { st.S.push(sv); st.Y.push(yv); st.rho.push(1 / sy); if (st.S.length > 25) { st.S.shift(); st.Y.shift(); st.rho.shift(); } }
+  x.set(st.xn); g.set(st.gn); st.f = fn;
+}
+function makePolish(P, innerCap) {
+  setup(P.n);
+  return { n: P.n, pb: makeProb(P), outer: 0, inner: null, innerIts: 0, innerCap: innerCap || 3000, prev: 1e18, viol: 1e9, done: false, total: 0 };
+}
+function polishWork(job, budgetMs) {
+  setup(job.n);
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const t0 = now();
+  const cons = { gp: new Float64Array(NP), gw: new Float64Array(NW), eo: new Float64Array(NO) };
+  while (!job.done && now() - t0 < budgetMs) {
+    if (!job.inner) { job.inner = makeLBFGS(job.pb); job.innerIts = 0; }
+    lbfgsStep(job.pb, job.inner); job.innerIts++; job.total++;
+    if (job.inner.done || job.innerIts >= job.innerCap) {
+      const pb = job.pb; evalL(pb, pb.x, null, cons);
+      let viol = 0;
+      for (let p = 0; p < NP; p++) { viol = Math.max(viol, -cons.gp[p]); pb.lp[p] = Math.max(0, pb.lp[p] - pb.mu * cons.gp[p]); }
+      for (let a = 0; a < NW; a++) { viol = Math.max(viol, -cons.gw[a]); pb.lw[a] = Math.max(0, pb.lw[a] - pb.mu * cons.gw[a]); }
+      for (let a = 0; a < NO; a++) { viol = Math.max(viol, Math.abs(cons.eo[a])); pb.lo[a] += pb.mu * cons.eo[a]; }
+      job.viol = viol; job.outer++; job.inner = null;
+      if (viol < 1e-12 || job.outer >= 40) job.done = true;
+      else { if (viol > 0.25 * job.prev) pb.mu = Math.min(pb.mu * 5, 1e9); job.prev = viol; }
+    }
+  }
+}
+function jobToPacking(job) {
+  setup(job.n); const x = job.pb.x;
+  return { n: job.n, c: x.slice(0, nd), R: x.slice(nd, nd + ndd), u: x.slice(nd + ndd, nd + ndd + NP*d), s: x[NV-1] };
+}
+/* min gap along each pair's stored axis (a valid non-overlap certificate when >= 0) */
+function clearances(P) {
+  setup(P.n); let mn = 1e18;
+  for (let p = 0; p < NP; p++) {
+    const i = PI[p], j = PJ[p]; let nr = 0; for (let k = 0; k < d; k++) nr += P.u[p*d+k] ** 2; nr = Math.sqrt(nr) || 1;
+    let hs = 0, uw = 0;
+    for (let m = 0; m < d; m++) { let a = 0, b = 0; for (let k = 0; k < d; k++) { a += P.R[i*16+k*d+m] * P.u[p*d+k]; b += P.R[j*16+k*d+m] * P.u[p*d+k]; } hs += 0.5 * (Math.abs(a) + Math.abs(b)) / nr; }
+    for (let k = 0; k < d; k++) uw += P.u[p*d+k] / nr * (P.c[j*d+k] - P.c[i*d+k]);
+    mn = Math.min(mn, Math.abs(uw) - hs);
+  }
+  return mn;
+}
+function overlapping(P, tol) {
+  setup(P.n); const hot = new Set();
+  for (let p = 0; p < NP; p++) {
+    const i = PI[p], j = PJ[p]; let nr = 0; for (let k = 0; k < d; k++) nr += P.u[p*d+k] ** 2; nr = Math.sqrt(nr) || 1;
+    let hs = 0, uw = 0;
+    for (let m = 0; m < d; m++) { let a = 0, b = 0; for (let k = 0; k < d; k++) { a += P.R[i*16+k*d+m] * P.u[p*d+k]; b += P.R[j*16+k*d+m] * P.u[p*d+k]; } hs += 0.5 * (Math.abs(a) + Math.abs(b)) / nr; }
+    for (let k = 0; k < d; k++) uw += P.u[p*d+k] / nr * (P.c[j*d+k] - P.c[i*d+k]);
+    if (Math.abs(uw) - hs < -tol) { hot.add(i); hot.add(j); }
+  }
+  return hot;
+}
+function finalize(P) {
+  setup(P.n);
+  for (let i = 0; i < n; i++) gs(P.R, i*16);
+  const mn = clearances(P);
+  if (mn < 0) { const lam = 1 + 2 * (-mn) + 1e-13; for (let q = 0; q < nd; q++) P.c[q] *= lam; }
+  let sn = 0;
+  for (let k = 0; k < d; k++) {
+    let lo = 1e18, hi = -1e18;
+    for (let i = 0; i < n; i++) { let l1 = 0; for (let m = 0; m < d; m++) l1 += Math.abs(P.R[i*16+k*d+m]); lo = Math.min(lo, P.c[i*d+k] - 0.5*l1); hi = Math.max(hi, P.c[i*d+k] + 0.5*l1); }
+    for (let i = 0; i < n; i++) P.c[i*d+k] -= lo; sn = Math.max(sn, hi - lo);
+  }
+  P.s = sn; return P;
+}
+function perturb(P0, maxDeg) {
+  setup(P0.n);
+  const P = clone(P0), moved = new Set(), kind = Math.floor(rnd() * 3);
+  if (kind < 2) {
+    for (let q = 0; q < (kind === 0 ? 1 : 2); q++) {
+      const i = Math.floor(rnd() * n); moved.add(i);
+      const a = Math.floor(rnd() * d); let b = Math.floor(rnd() * (d - 1)); if (b >= a) b++;
+      const th = (5 + (maxDeg - 5) * rnd()) * Math.PI / 180 * (rnd() < .5 ? -1 : 1), off = i*16;
+      for (let m = 0; m < d; m++) { const ra = P.R[off+a*d+m], rb = P.R[off+b*d+m]; P.R[off+a*d+m] = Math.cos(th)*ra - Math.sin(th)*rb; P.R[off+b*d+m] = Math.sin(th)*ra + Math.cos(th)*rb; }
+      for (let k = 0; k < d; k++) P.c[i*d+k] += 0.1 * gauss();
+    }
+  } else {
+    const i = Math.floor(rnd() * n); let j = Math.floor(rnd() * n); if (i === j) j = (j + 1) % n; moved.add(i); moved.add(j);
+    for (let k = 0; k < d; k++) { const t = P.c[i*d+k]; P.c[i*d+k] = P.c[j*d+k]; P.c[j*d+k] = t; }
+  }
+  for (let q = 0; q < nd; q++) P.c[q] += 0.01 * gauss();
+  axesFromCentres(P, moved);
+  return P;
+}
+/* run one full polish synchronously (for Node testing) */
+function polishSync(P, innerCap) { const job = makePolish(P, innerCap); while (!job.done) polishWork(job, 1e9); return { P: finalize(jobToPacking(job)), job }; }
+
+const Core = { setSeed, rnd, productSeed, fromData, makePolish, polishWork, jobToPacking, finalize, clearances, overlapping, perturb, clone, polishSync };
+if (typeof module !== 'undefined' && module.exports) module.exports = Core; else root.Core = Core;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+const RECORDS = {"26":{"n":26,"s":2.942809041944,"centers":[0.500294475968,0.501338433045,2.365873419948,2.365114413683,2.35470036692,0.611308337711,0.500158625715,0.500175182704,0.512293437522,0.509958648937,0.507181257779,2.363011516362,2.367799915478,0.604345208244,1.468961321797,1.382164153847,2.42231591361,0.501600545016,0.730394893503,2.154302791795,2.367766677594,2.369749865679,0.502078891607,0.503334945311,1.345873776428,1.458300704308,0.500000000013,0.500000000005,0.502417295762,2.351240039335,2.420395849523,2.321135414768,0.500332945192,2.357202443166,0.500000000027,0.500000000079,1.386806133753,1.504509197407,2.442809041842,0.500000000042,2.413789939603,2.369117237758,1.422859732013,1.339007026649,0.503392910222,2.359677896261,1.471401839868,1.235702260626,2.420614170377,0.503318730433,2.367521139941,2.368634629003,1.452110365988,1.323105735682,0.500909766486,2.368753298462,0.50228623024,2.357040885331,2.442809041798,0.500000000047,2.366688316648,2.355147123473,0.522559300196,2.301800714911,1.40846623751,1.518479903834,1.471412898933,1.235702261158,2.370130158778,2.358937738513,2.362711384623,2.354270726103,0.51135054478,0.505381237951,0.510630939433,0.501501849142,0.517219695123,0.619850650813,1.379846499154,1.452588056768,1.467252635726,1.347767270749,2.420503605495,2.371691787313,2.364463855215,0.618935431109,2.369388116559,0.507169563976,0.514540550482,0.513629386027,2.356609061197,0.523608168823,2.368840734217,2.371825551473,2.374052907395,0.501967144281,0.501412048029,2.341919394282,0.50163392278,2.090676080889,1.254070167228,2.418184380637,1.457050334477,2.442809041933],"R":[0.999999904229,-0.000168534801,-1.6965775e-05,0.000403547131,0.000168952004,0.999998385443,-0.001415543209,-0.001093985434,1.6787354e-05,0.001416671358,0.99999846209,0.00103372059,-0.000403380105,0.001092588564,-0.001035261994,0.999998785883,0.999821176026,-0.018908690795,-2.4526788e-05,-0.000277095052,0.018908677914,0.999821211187,-7.6046329e-05,-4.21447e-05,2.5959569e-05,7.5568862e-05,0.999999996804,-2.777191e-06,0.000277842484,3.6897872e-05,2.76719e-06,0.999999960717,0.999947209187,0.000921954437,0.00192624593,-0.010050791797,-0.000895428637,0.999922907421,-0.012381753332,0.000263829203,-0.001937652157,0.012380001672,0.999921487441,-4.116395e-06,0.010050997502,-0.000254504394,2.6744388e-05,0.999949454703,0.999983542427,-0.005534914826,0.000568821846,0.001398583267,0.005514710027,0.974956389938,-0.222252236297,0.005793889271,0.001505591366,0.15615702122,0.666038752667,-0.729386795784,-0.000485843122,0.158254185286,0.712036515811,0.68407556377,0.999999991919,-0.00012688334,4.986479e-06,6.112577e-06,0.000126883275,0.999999991663,2.2679122e-05,-7.75484e-06,1.169747e-06,-2.0988349e-05,0.672318104811,-0.740262362613,-7.802367e-06,-1.1573791e-05,0.740262362547,0.672318105068,0.999999978246,-0.000143380056,0.000114521913,-9.9170487e-05,0.000143381841,0.999999988194,-4.4248569e-05,-3.3116196e-05,-0.0001145137,4.4265613e-05,0.999999992286,1.8835908e-05,9.9177391e-05,3.3101143e-05,-1.8826016e-05,0.999999994357,0.686777896882,-0.726867333393,1.1e-11,-0.0,0.726867333393,0.686777896882,9e-12,0.0,-1.4e-11,2e-12,1,1e-11,-0.0,-0.0,-1e-11,1,0.999999998436,5.1756723e-05,4.215452e-06,-2.0764925e-05,-5.1686029e-05,0.999994141735,0.000145605191,0.003419447869,-4.208143e-06,-0.000145569161,0.999999989337,-1.0849399e-05,2.0941739e-05,-0.003419448334,1.0351658e-05,0.999994153397,0.999999939881,-0.000346754428,-1e-11,9e-12,0.000346754428,0.999999939881,-2e-12,-2e-12,1e-11,2e-12,1,-2e-11,-9e-12,2e-12,2e-11,1,0.712817656245,-0.701349405749,4e-12,-0.0,0.701349405749,0.712817656245,-5e-12,3e-12,1e-12,6e-12,1,-0.0,-2e-12,-2e-12,0.0,1,0.999986268698,0.000197681469,-0.005236528978,4.5845472e-05,-0.000197045334,0.999999969442,0.000121232947,-8.7134485e-05,0.004461802971,-5.7999596e-05,0.856557464815,0.516032361796,-0.002741514708,0.000136655748,-0.516025070648,0.856569081794,0.999990888441,0.004268844797,-6e-12,5.7e-11,-0.004268844797,0.999990888441,3e-12,-3e-12,4.5e-11,-4e-12,0.707114824429,-0.707098737852,-3.5e-11,-0.0,0.707098737852,0.707114824429,0.999999453515,4.9755393e-05,-0.001041737652,-7.2635346e-05,-4.9657511e-05,0.999999994228,9.471138e-05,-1.0406778e-05,0.001041766051,-9.465619e-05,0.999999399444,0.000326917562,7.2294222e-05,1.0441337e-05,-0.000326992065,0.99999994387,0.887234211846,-0.461306989596,-1.606072e-05,0.003363691767,0.461303692215,0.887240587865,-3.5382765e-05,0.001744001659,3.0612594e-05,2.3984056e-05,0.999999999187,-1.064559e-05,-0.00378892369,4.345752e-06,1.0761398e-05,0.999992821936,0.999998830538,-0.001529353521,-2.1e-11,1.6e-11,0.001529353521,0.999998830538,1.4e-11,7e-12,2.1e-11,-1.5e-11,1,9e-12,-1.6e-11,-7e-12,-9e-12,1,0.999988498983,-0.002626955409,0.00016948931,0.004009024823,0.002650958893,0.999976601199,-0.002224182443,-0.005901057933,-0.000110814065,0.00214627971,0.999910223827,-0.013225940051,-0.003995252003,0.005940508733,0.013212440063,0.999887083497,0.68625531981,-0.727360733084,1e-11,-6e-12,0.727360733084,0.68625531981,9e-12,9e-12,-8e-12,8e-12,0.707081646619,-0.707131914861,-1.1e-11,-7e-12,0.707131914861,0.707081646619,0.999999920028,-4.3719691e-05,-0.000296233506,0.000265101039,4.3713825e-05,0.999999990999,-9.501696e-05,-8.4037344e-05,0.000295876493,9.5118342e-05,0.999999025014,0.001361389196,-0.000265500404,8.3919522e-05,-0.001361318636,0.999999034639,0.999982435806,0.000449336964,-0.005470891741,-0.002235066028,-0.000420317568,0.999986304638,0.00521174273,0.000227171791,0.005473605709,-0.005209408576,0.999971431648,0.000193883968,0.00223406669,-0.000225154933,-0.000207290721,0.999997457638,0.999872548188,-0.007230235972,-0.010935436762,-0.009111931235,0.009161879661,0.989806062629,0.095772057308,0.10501300578,0.000162369073,0.019337641661,0.641241360921,-0.767095526187,0.013073674983,-0.14091748538,0.761260564003,0.6328141078,0.905707010906,-0.423901187428,-0.001597480842,-0.000204323075,0.423901024882,0.905708402507,-0.000449522221,-9.3075209e-05,0.001637403543,-0.000270038332,0.999998622976,-5.892292e-06,0.000224521172,-2.315387e-06,5.524043e-06,0.999999974777,0.99996936536,0.004670789068,-0.000965008869,-0.006206514955,-0.004620969641,0.99995792496,0.001365562412,0.007805779214,0.000970465596,-0.001359971399,0.999998593259,-0.000148841182,0.006242850041,-0.007777050696,0.000132198928,0.999950262178,0.999972991246,0.000327804333,0.007264041904,0.001069120644,-0.00025706697,0.99990873555,-0.010907507203,0.007967482233,-0.007268711855,0.010894262495,0.999913208784,0.001433796209,-0.001056656969,-0.007982991855,-0.001354577697,0.999966659662,0.999998202799,3.558036e-05,-0.000464403683,-0.001837787503,-3.3451191e-05,0.999999096284,-0.000440289625,0.001269825516,0.000465883921,0.000439272202,0.999999463999,0.000813630298,0.001837452813,-0.001270119974,-0.000813926546,0.999997174039,0.999999998417,-3.5753961e-05,-1.7714379e-05,-3.9663686e-05,3.5388747e-05,0.999958007659,-1.2936951e-05,-0.009164142014,1.7714874e-05,1.2944363e-05,0.999999999759,8.17999e-07,3.9989658e-05,0.009164140586,-9.37297e-07,0.999958007582,-0.715183446757,5e-12,9.215284e-05,-0.69893678469,0.000114446265,-1.5e-11,0.999999993342,1.4740626e-05,0.698936781395,5e-12,-6.9448453e-05,-0.715183452542,0.0,-1,-1.5e-11,-7e-12]},"27":{"n":27,"s":2.942809214312,"centers":[1.412022050046,1.349719061528,0.500000008102,2.442809132034,0.512204985349,2.373430295317,2.442809123143,0.500000014738,2.442809148906,0.500000000376,0.500000000117,2.442809149282,2.442809206278,0.500000000467,1.38643704572,1.328961428801,1.694229872827,1.47157852487,2.438298218258,2.436166338238,2.395931102133,0.504534678803,2.410652841235,0.500169741718,2.412680522514,2.425474543321,2.420097061601,0.500447543606,0.50000000188,0.500000001819,0.500000000924,2.442809146639,0.501147499111,0.566538402827,2.320562534327,2.435401646257,2.434930486271,2.43263383304,1.410894705237,1.310090474471,2.435698235065,2.435584057994,2.364504044958,2.399295241001,1.466037542604,1.579729988989,2.429194941748,0.502342462731,2.44280915508,0.500000001553,0.500000000813,0.500000001495,1.471651318904,1.235702824428,1.235702466073,1.47126650236,0.502302753014,2.183943185936,2.434194883046,2.268099951212,2.329719319039,2.307745172417,0.50239114153,0.500686865412,2.232571984998,2.211481862868,0.504661803816,2.400451846118,0.516988416218,2.408801760051,0.500000017912,0.500000018907,0.500793415409,2.375232905881,0.50097609735,2.390569015522,0.501075478071,0.522811263017,2.391670192213,0.501117566916,2.438145785212,0.500913631478,2.212132407756,2.214304844307,0.500000000065,0.500000000173,1.235702303962,1.471466740608,0.50000000146,0.500000001743,0.500000001754,0.500000000155,0.515754506895,2.387979501907,1.471348033674,1.235702310036,1.335031662155,1.436316018291,0.500000004562,0.500000003713,1.248210954273,2.44280920992,1.449879194656,2.442809104321,1.245547657989,0.501761562744,2.442809140623,1.455407156382],"R":[0.940735890571,-0.339140065741,-4.15e-10,2.3e-11,0.339140065741,0.940735890571,1.81e-10,-2.24e-10,3.29e-10,-3.11e-10,1,3.14e-10,5.4e-11,2.18e-10,-3.14e-10,1,0.999996676083,0.002578337091,-1.04e-10,8.5e-11,-0.002578337091,0.999996676083,-6e-12,7e-12,1.04e-10,6e-12,1,0.0,-8.5e-11,-7e-12,-0.0,1,1,1.01e-10,-9.6e-11,3.79e-10,-1.01e-10,1,-1.26e-10,-1.8e-10,9.6e-11,1.26e-10,1,-1.2e-11,-3.79e-10,1.8e-10,1.2e-11,1,1,0.0,3.556e-09,1.2455e-08,-0.0,1,-3.9e-11,-7.03e-10,3.923e-09,-3.56e-10,0.833278063125,-0.552854112325,-1.2344e-08,6.07e-10,0.552854112325,0.833278063125,-0.723004335167,-0.690843481661,0.000105212073,6.4089375e-05,0.690843483346,-0.723004338018,4.3275885e-05,-8.27781e-05,4.6177927e-05,0.000103972824,0.999999991846,5.80023e-05,0.000103520929,-1.5579229e-05,-5.800546e-05,0.999999992838,0.999998732588,0.001590035376,-2.2806077e-05,7.8042088e-05,-0.001590038852,0.999998734359,2.1700986e-05,5.0848434e-05,2.2841502e-05,-2.1664076e-05,0.99999999943,-1.2170652e-05,-7.796086e-05,-5.0972723e-05,1.2171329e-05,0.999999995588,0.999998078148,0.001655215423,1.676514e-05,-0.001050562615,-0.001655198825,0.999998621317,0.000131640389,1.875564e-05,-0.001050592127,1.7017452e-05,-5.602158e-06,-0.999999447967,-1.6553102e-05,-0.000131667863,0.999999991179,-5.587011e-06,1,1.43e-10,-4.9e-11,-6.21e-10,-1.43e-10,1,-1.1e-10,-6.17e-10,4.9e-11,1.1e-10,1,2.1e-11,6.21e-10,6.17e-10,-2.1e-11,1,-1.3035199e-05,-0.99999999947,-2.6406105e-05,1.3891863e-05,0.99999949396,-1.3010658e-05,-0.000997498018,-0.000130030257,0.000997503011,-2.6418525e-05,0.999999501305,4.0984804e-05,0.000129989491,1.3891254e-05,-4.1114122e-05,0.99999999061,0.999999886153,-2.464346e-05,0.000207292607,-0.0004290875,2.4164384e-05,0.999996949848,0.002468582002,7.6244686e-05,-0.000373793888,-0.002187929582,0.899787501006,-0.436322731788,0.000295614309,-0.001145709874,0.436321345072,0.899790133195,0.99999997954,2.718451e-06,-5.55184e-07,-0.000202266108,-2.742446e-06,0.999999992952,-4.119658e-06,-0.000118622688,3.08413e-07,3.974939e-06,0.999999255819,-0.001219977421,0.000202266311,0.000118628177,0.001219976853,0.999999228336,0.906896729437,0.42134561022,-0.002488889547,-6.5674253e-05,-0.421343891364,0.90690014398,0.001205310118,-3.5870249e-05,0.002765027689,-4.4411681e-05,0.999996175911,2.8501166e-05,4.4367249e-05,6.0203558e-05,-2.8621278e-05,0.999999996794,1,5.6e-11,5.4e-11,2.67e-10,-5.6e-11,1,-4.5e-11,-1.94e-10,-5.4e-11,4.5e-11,1,2.04e-10,-2.67e-10,1.94e-10,-2.04e-10,1,0.706366248817,-0.707846538829,2.728e-09,6.303e-09,0.707846538829,0.706366248817,-6.136e-09,-6.261e-09,1.722e-09,-1.858e-09,0.706692434544,-0.707520885175,1.696e-09,1.0711e-08,0.707520885175,0.706692434544,0.00013892959,-0.999999990283,-2.212391e-06,1.1278485e-05,0.952413036677,0.00012888061,-2.4889654e-05,-0.304810417043,2.1908904e-05,-2.209496e-06,0.99999999967,-1.3200379e-05,0.304810412857,5.308895e-05,5.894268e-06,0.952413045564,0.997070761906,-0.076484459737,-0.000148497452,3.3460616e-05,0.076484577526,0.99706922633,0.001687440122,0.000468884394,1.8966139e-05,-0.001694077647,0.999998450181,0.00047893317,-6.9234126e-05,-0.000464139737,-0.000479718782,0.999999774825,0.809230738853,-0.587489952442,0.001018493447,0.000360204157,0.58748991432,0.809231388829,0.000320760813,0.000238783172,-0.001012531988,0.000338780511,0.999999398316,-0.000251743768,-0.000432025934,1.8470773e-05,0.00025130019,0.99999987493,0.999999990969,0.00013439678,5.9e-11,1.07e-10,-0.00013439678,0.999999990969,-1.5e-11,-1.4e-11,-5.9e-11,1.5e-11,1,-3e-12,-1.07e-10,1.3e-11,3e-12,1,0.999999999569,2.4969946e-05,1.3284807e-05,-7.838417e-06,-2.4947841e-05,0.999996219436,-3.4626369e-05,0.002749416644,-1.3285744e-05,3.4651336e-05,0.999999999269,-9.153721e-06,7.906917e-06,-0.002749416129,9.249062e-06,0.999996220274,0.999999999396,-3.0512769e-05,-6.0563e-06,-1.5477434e-05,3.0712096e-05,0.999350496161,0.036035836128,5.8255604e-05,4.952797e-06,-0.036035836295,0.999350498312,-1.077186e-06,1.547565e-05,-5.8257056e-05,-1.022897e-06,0.999999998183,0.999999996315,-5.373344e-06,-3.9511125e-05,7.6028956e-05,5.371248e-06,0.99999999849,-5.4681992e-05,-8.53604e-07,-1.2324705e-05,4.488786e-05,0.811772005956,0.583974492748,-8.4791835e-05,-3.1239501e-05,-0.583974490706,0.81177200373,1,0.0,-1.19e-10,1e-11,-0.0,1,-3.11e-10,-3.4e-11,9.2e-11,1.96e-10,0.707293258908,-0.706920254275,7.7e-11,2.44e-10,0.706920254275,0.707293258908,1,4.6e-11,-2.23e-10,-8.6e-11,-4.6e-11,1,4.4e-10,8.4e-11,2.23e-10,-4.4e-10,1,1.4e-10,8.6e-11,-8.4e-11,-1.4e-10,1,0.999971213382,0.007587648392,1.85e-10,2.29e-10,-0.007587648392,0.999971213382,-3.6e-11,2.2e-11,3.1e-11,4.1e-11,0.707276385838,-0.706937135845,-2.93e-10,7e-12,0.706937135845,0.707276385838,0.81945086801,0.573149435067,-8.15e-10,-6.81e-10,-0.573149435067,0.81945086801,-1.211e-09,1.15e-10,-2.6e-11,1.459e-09,1,1.24e-10,6.24e-10,2.96e-10,-1.24e-10,1,-1.97e-10,-1.9e-11,-0.652244798,-0.758008392751,8.733e-09,-1,-1.3e-11,3.6e-11,4.4e-11,3.4e-11,-0.758008392751,0.652244798,-1,-8.733e-09,9.6e-11,1.78e-10,2.271e-09,-0.000140522013,0.665820222926,-0.746112197324,3.412e-09,-0.999999982858,-3.602109e-06,0.000185124507,-1,-3.413e-09,1.685e-09,-1.539e-09,2.32e-10,0.000120572063,0.746112210548,0.665820212019]}};
+(() => {
+const C = window.Core, d = 4;
+const BASE = { 26: 2.956, 27: 2.989949, 28: 2.989949, 29: 3, 30: 3 };
+const $ = id => document.getElementById(id);
+
+/* ---------- rendering ---------- */
+const main = $('main'), ctx = main.getContext('2d');
+const planes = [[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+const shC = planes.map(([a, b]) => {
+  const box = document.createElement('div'); box.className = 'sh';
+  const cv = document.createElement('canvas'); cv.setAttribute('aria-label', `shadow on the x${a+1}x${b+1} plane`);
+  const lab = document.createElement('span'); lab.textContent = `x${a+1}x${b+1}`;
+  box.append(cv, lab); $('shadows').append(box); return cv;
+});
+const colors = {};
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const k of ['ink','muted','rule','frame','tilt','hot','paper']) colors[k] = cs.getPropertyValue('--' + k).trim(); }
+readColors();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors); } catch (e) {}
+new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+const VERTS = []; for (let v = 0; v < 16; v++) VERTS.push([0,1,2,3].map(k => (v >> k & 1) ? 0.5 : -0.5));
+const EDGES = []; for (let v = 0; v < 16; v++) for (let k = 0; k < 4; k++) if (!(v >> k & 1)) EDGES.push([v, v | (1 << k)]);
+function cubeVerts(P, i) {
+  return VERTS.map(sv => { const p = [0,0,0,0]; for (let k = 0; k < d; k++) { let v = P.c[i*d+k]; for (let m = 0; m < d; m++) v += P.R[i*16+k*d+m] * sv[m]; p[k] = v; } return p; });
+}
+function isTilted(P, i) { for (let m = 0; m < d; m++) { let mx = 0; for (let k = 0; k < d; k++) mx = Math.max(mx, Math.abs(P.R[i*16+k*d+m])); if (mx < 0.995) return true; } return false; }
+function fit(cv) { const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } return [w, h, dpr]; }
+
+const view = { a1: 0.35, a2: 0.2, yaw: 0.6, pitch: 0.35 };
+function project(p, w, h) {
+  const c1 = Math.cos(view.a1), s1 = Math.sin(view.a1), c2 = Math.cos(view.a2), s2 = Math.sin(view.a2);
+  let x = c1*p[0] - s1*p[3], y = c2*p[1] - s2*p[2], z = s2*p[1] + c2*p[2], u = s1*p[0] + c1*p[3];
+  const f4 = 4.2 / (4.2 - u); x *= f4; y *= f4; z *= f4;
+  const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+  const X = cy*x + sy*z; let Z = -sy*x + cy*z; const Y = cp*y - sp*Z; Z = sp*y + cp*Z;
+  const f3 = 7 / (7 - Z), sc = Math.min(w, h) / 6.4;
+  return [w/2 + X * f3 * sc, h/2 - Y * f3 * sc];
+}
+function drawMain(P, hot) {
+  const [w, h, dpr] = fit(main); ctx.clearRect(0, 0, w, h);
+  const half = P.s / 2;
+  ctx.lineWidth = dpr; ctx.strokeStyle = colors.muted; ctx.globalAlpha = 0.5;
+  const box = VERTS.map(v => project(v.map(t => t * P.s), w, h));
+  ctx.beginPath(); for (const [a, b] of EDGES) { ctx.moveTo(...box[a]); ctx.lineTo(...box[b]); } ctx.stroke();
+  for (let i = 0; i < P.n; i++) {
+    const vs = cubeVerts(P, i).map(p => project(p.map(t => t - half), w, h));
+    const tilted = isTilted(P, i), isHot = hot.has(i);
+    ctx.strokeStyle = isHot ? colors.hot : tilted ? colors.tilt : colors.frame;
+    ctx.globalAlpha = tilted || isHot ? 0.85 : 0.45; ctx.lineWidth = (tilted || isHot ? 1.3 : 1) * dpr;
+    ctx.beginPath(); for (const [a, b] of EDGES) { ctx.moveTo(...vs[a]); ctx.lineTo(...vs[b]); } ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+function hull(pts) {
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lo = [], up = [];
+  for (const p of pts) { while (lo.length >= 2 && cr(lo[lo.length-2], lo[lo.length-1], p) <= 0) lo.pop(); lo.push(p); }
+  for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (up.length >= 2 && cr(up[up.length-2], up[up.length-1], p) <= 0) up.pop(); up.push(p); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function drawShadows(P, hot) {
+  const allV = []; for (let i = 0; i < P.n; i++) allV.push(cubeVerts(P, i));
+  planes.forEach(([a, b], idx) => {
+    const cv = shC[idx], g = cv.getContext('2d'); const [w, h, dpr] = fit(cv); g.clearRect(0, 0, w, h);
+    const pad = 4 * dpr, sc = (Math.min(w, h) - 2 * pad) / Math.max(P.s, 3);
+    const X = v => pad + v * sc, Y = v => h - pad - v * sc;
+    g.strokeStyle = colors.muted; g.lineWidth = dpr; g.strokeRect(X(0), Y(P.s), P.s * sc, P.s * sc);
+    for (let i = 0; i < P.n; i++) {
+      const hp = hull(allV[i].map(p => [p[a], p[b]]));
+      const col = hot.has(i) ? colors.hot : isTilted(P, i) ? colors.tilt : colors.frame;
+      g.beginPath(); hp.forEach((p, k) => k ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.closePath();
+      g.globalAlpha = 0.12; g.fillStyle = col; g.fill(); g.globalAlpha = 0.75; g.strokeStyle = col; g.lineWidth = dpr; g.stroke(); g.globalAlpha = 1;
+    }
+  });
+}
+
+/* ---------- presets ---------- */
+const keys = Object.keys(RECORDS).map(Number).sort((a, b) => b - a);
+for (const sel of [$('preset'), $('jsonpick')]) for (const k of keys) {
+  const o = document.createElement('option'); o.value = k; o.textContent = `Found packing, n = ${k} (side ${RECORDS[k].s.toFixed(6)})`; sel.append(o);
+}
+function showPreset(k) {
+  shown = C.fromData(RECORDS[k]); shownValid = true; mode = 'idle'; job = null; setButtons();
+  readouts(shown, 0, 'found packing', 0);
+  setStatus(`The ${k}-cube packing found by the C++ search and basin hopping: side ${RECORDS[k].s.toFixed(12)}.`);
+}
+
+/* ---------- controller ---------- */
+let shown = null, shownValid = false, job = null, mode = 'idle', incumbent = null, hops = 0;
+const bestByN = {};
+function setStatus(t) { $('status').textContent = t; }
+function setButtons() {
+  const busy = mode !== 'idle';
+  $('run').disabled = busy; $('show').disabled = busy; $('stop').disabled = !busy; $('hop').disabled = busy || !shownValid;
+  for (const id of ['pn','pseed','ps0','pjit','pcap','pang','randseed','preset']) $(id).disabled = busy;
+}
+function readouts(P, viol, phase, its) {
+  $('rN').textContent = P.n;
+  $('rS').textContent = P.s.toFixed(6);
+  $('rT').textContent = BASE[P.n] ? BASE[P.n].toFixed(6) : '–';
+  $('rV').textContent = viol > 0 && viol < 1e8 ? viol.toExponential(1) : '0';
+  $('rP').textContent = phase; $('rI').textContent = its.toLocaleString();
+  $('rB').textContent = bestByN[P.n] ? bestByN[P.n].s.toFixed(6) : 'none yet';
+}
+function num(id, lo, hi, def) { const v = parseFloat($(id).value); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def; }
+function params() {
+  return { n: parseInt($('pn').value, 10), seed: Math.floor(num('pseed', 0, 4294967295, 23)), s0: num('ps0', 2.75, 3.2, 2.9),
+           jit: num('pjit', 0, 0.2, 0.03), cap: Math.floor(num('pcap', 200, 10000, 3000)), ang: num('pang', 5, 90, 45) };
+}
+function startSearch() {
+  const p = params(); C.setSeed(p.seed);
+  const P = C.productSeed(p.n, p.s0, p.jit);
+  job = C.makePolish(P, p.cap); job.label = `n = ${p.n}, seed ${p.seed}`; mode = 'search'; shown = P; shownValid = false; setButtons();
+  setStatus(`Seed ${p.seed}: the 25-cube construction stretched to side ${p.s0.toFixed(2)}, plus ${p.n - 25 > 1 ? (p.n - 25) + ' extra cubes at random spots' : 'one extra cube at a random spot'} (orange where overlapping). Polishing.`);
+}
+function startHop() {
+  const p = params(); C.setSeed(p.seed + 1000003);
+  incumbent = C.clone(shown); hops = 0; mode = 'hop'; job = C.makePolish(C.perturb(incumbent, p.ang), p.cap); setButtons();
+  setStatus(`Basin hopping from side ${incumbent.s.toFixed(7)}: turn, move or swap one or two cubes, re-polish, keep the result if the box shrinks.`);
+}
+function finishJob() {
+  const P = C.finalize(C.jobToPacking(job)); const ok = C.clearances(P) >= -1e-9;
+  if (ok && (!bestByN[P.n] || P.s < bestByN[P.n].s)) bestByN[P.n] = C.clone(P);
+  if (mode === 'search') {
+    shown = P; shownValid = ok; mode = 'idle'; readouts(P, 0, 'done', job.total);
+    const base = BASE[P.n];
+    setStatus(!ok ? `${job.label}: the polish did not reach a valid packing. Try another seed.` :
+      `${job.label}: settled at side ${P.s.toFixed(7)} after ${job.total.toLocaleString()} L-BFGS steps. ` +
+      (P.s < base ? `That is below the ${base} construction. Press "Basin hop" to try to improve it.` : `Not below the ${base} construction this time; try another seed.`));
+    job = null; setButtons();
+  } else {
+    hops++;
+    if (ok && P.s < incumbent.s - 1e-9) { incumbent = C.clone(P); setStatus(`Hop ${hops}: improved to ${P.s.toFixed(9)}.`); }
+    else if (hops % 5 === 0) setStatus(`Hop ${hops}: still at ${incumbent.s.toFixed(9)}. Improvements get rare near the optimum.`);
+    shown = incumbent; shownValid = true; readouts(incumbent, 0, `hop ${hops}`, job.total);
+    const p = params(); job = C.makePolish(C.perturb(incumbent, p.ang), p.cap);
+  }
+}
+$('params').addEventListener('submit', e => { e.preventDefault(); startSearch(); });
+$('hop').onclick = startHop;
+$('stop').onclick = () => { if (mode === 'hop') { shown = incumbent; shownValid = true; } mode = 'idle'; job = null; setButtons(); setStatus('Stopped.'); };
+$('show').onclick = () => showPreset($('preset').value);
+$('randseed').onclick = () => { $('pseed').value = Math.floor(Math.random() * 100000); };
+
+/* drag to rotate */
+let drag = null; const stage = $('stage');
+stage.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; stage.setPointerCapture(e.pointerId); stage.style.cursor = 'grabbing'; });
+stage.addEventListener('pointermove', e => { if (!drag) return; view.yaw += (e.clientX - drag[0]) * 0.01; view.pitch += (e.clientY - drag[1]) * 0.01; drag = [e.clientX, e.clientY]; });
+const endDrag = () => { drag = null; stage.style.cursor = 'grab'; };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) $('spin').checked = false;
+let frame = 0;
+function loop() {
+  if (job && mode !== 'idle') {
+    C.polishWork(job, 14);
+    if (mode === 'search') { shown = C.jobToPacking(job); readouts(shown, job.viol, `polish, round ${job.outer + 1}`, job.total); }
+    if (job.done) finishJob();
+  }
+  if ($('spin').checked) { view.a1 += 0.004; view.a2 += 0.0025; }
+  const hot = mode === 'search' && frame % 3 === 0 ? (loop.hot = C.overlapping(shown, 1e-3)) : (mode === 'search' ? loop.hot || new Set() : new Set());
+  drawMain(shown, hot);
+  if (frame % 2 === 0) drawShadows(shown, hot);
+  frame++;
+  requestAnimationFrame(loop);
+}
+
+/* JSON + copy */
+function jsonFor(k) { const r = RECORDS[k]; return JSON.stringify({ d: 4, n: r.n, s: r.s, centers: r.centers, R: r.R }); }
+$('jsonpick').onchange = () => { $('json').textContent = jsonFor($('jsonpick').value); };
+$('json').textContent = jsonFor(keys[0]);
+$('copy').onclick = () => {
+  const text = $('json').textContent;
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('json')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('copied').textContent = 'Selected. Press Ctrl+C to copy.'; };
+  try { navigator.clipboard.writeText(text).then(() => { $('copied').textContent = 'Copied.'; }, fallback); } catch (e) { fallback(); }
+};
+
+showPreset(keys[0]);
+loop();
+})();
+</script>
+
+</body>
+</html>
